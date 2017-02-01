@@ -76,9 +76,6 @@ class JaguarReflected implements j.RequestHandler {
 
       InstanceMirror method = im.getField(s);
 
-      print(method);
-      print(routes);
-
       routes
           .map((j.RouteBase route) =>
               new ReflectedRoute.build(method.reflectee, route, wrappers))
