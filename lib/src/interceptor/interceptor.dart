@@ -1,26 +1,5 @@
 part of jaguar_reflect.base;
 
-abstract class Inject {}
-
-Set<RouteQueryParam> _parseOptParamsForRoute(final MethodMirror m) {
-  final Set<RouteQueryParam> ret = new Set();
-
-  for (ParameterMirror p in m.parameters) {
-    if (!p.isOptional) continue;
-
-    if (!p.isNamed) break;
-
-    ret.add(new RouteQueryParam(
-        MirrorSystem.getName(p.simpleName), p.type.reflectedType));
-  }
-
-  return ret;
-}
-
-List<Inject> _parseReqParamsForPost(final MethodMirror m) {
-  return detectInputs(m);
-}
-
 class _Pre {
   final List<Inject> injects;
 
@@ -45,7 +24,7 @@ class _Post {
   }
 }
 
-class ReflectedInterceptor {
+class ReflectedWrapper {
   final j.RouteWrapper routeWrapper;
 
   final Type interceptorType;
@@ -54,10 +33,10 @@ class ReflectedInterceptor {
 
   final _Post _post;
 
-  ReflectedInterceptor(
+  ReflectedWrapper(
       this.routeWrapper, this._pre, this._post, this.interceptorType);
 
-  factory ReflectedInterceptor.build(j.RouteWrapper wrapper) {
+  factory ReflectedWrapper.build(j.RouteWrapper wrapper) {
     ClassMirror icm = _getInterceptorMirror(wrapper);
     _Pre pre;
     _Post post;
@@ -70,7 +49,7 @@ class ReflectedInterceptor {
       post = new _Post.build(postM);
     }
 
-    return new ReflectedInterceptor(wrapper, pre, post, icm.reflectedType);
+    return new ReflectedWrapper(wrapper, pre, post, icm.reflectedType);
   }
 
   static ClassMirror _getInterceptorMirror(final j.RouteWrapper wrapper) {
@@ -95,14 +74,4 @@ class ReflectedInterceptor {
 
     return wcm.typeArguments.first;
   }
-}
-
-class _Inter {
-  final ReflectedInterceptor wrapper;
-
-  final j.Interceptor inter;
-
-  final InstanceMirror interMirror;
-
-  _Inter(this.wrapper, this.inter, this.interMirror);
 }

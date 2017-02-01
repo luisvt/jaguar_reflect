@@ -5,6 +5,12 @@ import 'dart:async';
 import 'package:jaguar_reflect/jaguar_reflect.dart';
 import 'package:jaguar/jaguar.dart';
 
+@RouteGroup()
+class ExampleGroup1 {
+  @Get(path: '/api/hi')
+  String sayHi() => 'hi';
+}
+
 class ExampleApi implements RequestHandler {
   JaguarReflected _reflected;
 
@@ -15,11 +21,13 @@ class ExampleApi implements RequestHandler {
   @Get(path: '/api/hello')
   String sayHello() => 'hello';
 
+  @Group()
+  final ExampleGroup1 group1 = new ExampleGroup1();
+
   Future<Response> handleRequest(Request req, {String prefix}) =>
       _reflected.handleRequest(req, prefix: prefix);
 }
 
 main() async {
   final api = new ExampleApi();
-  await api.handleRequest(null);
 }

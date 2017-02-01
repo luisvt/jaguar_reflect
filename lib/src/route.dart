@@ -1,5 +1,15 @@
 part of jaguar_reflect.base;
 
+class ReflectedInterceptor {
+  final ReflectedWrapper wrapper;
+
+  final j.Interceptor inter;
+
+  final InstanceMirror interMirror;
+
+  ReflectedInterceptor(this.wrapper, this.inter, this.interMirror);
+}
+
 class ReflectedRoute implements j.RequestHandler {
   final j.RouteBase route;
 
@@ -11,7 +21,7 @@ class ReflectedRoute implements j.RequestHandler {
 
   final Set<RouteQueryParam> _optional;
 
-  final List<ReflectedInterceptor> wrappers;
+  final List<ReflectedWrapper> wrappers;
 
   ReflectedRoute(this.route, this.handler, this._invoker, this._required,
       this._optional, this.wrappers);
@@ -24,18 +34,19 @@ class ReflectedRoute implements j.RequestHandler {
     }
 
     final j.QueryParams queryParams =
-    new j.QueryParams(request.uri.queryParameters);
+        new j.QueryParams(request.uri.queryParameters);
 
     j.Response response = new j.Response(null,
         statusCode: route.statusCode, headers: route.headers);
 
-    final List<_Inter> inters = [];
+    final List<ReflectedInterceptor> inters = [];
     final Map<InputInject, dynamic> results = {};
     try {
-      for (ReflectedInterceptor wrapper in wrappers) {
+      for (ReflectedWrapper wrapper in wrappers) {
         final j.Interceptor i = wrapper.routeWrapper.createInterceptor();
         final InstanceMirror im = reflect(i);
-        final _Inter inter = new _Inter(wrapper, i, im);
+        final ReflectedInterceptor inter =
+            new ReflectedInterceptor(wrapper, i, im);
         inters.add(inter);
 
         if (inter.wrapper._pre == null) continue;
@@ -74,7 +85,7 @@ class ReflectedRoute implements j.RequestHandler {
       }
 
       // Interceptors post
-      for (_Inter inter in inters.reversed) {
+      for (ReflectedInterceptor inter in inters.reversed) {
         if (inter.wrapper._post == null) continue;
 
         final List reqParam = [];
@@ -92,42 +103,13 @@ class ReflectedRoute implements j.RequestHandler {
         }
       }
     } catch (e) {
-      for (_Inter inter in inters.reversed) {
+      for (ReflectedInterceptor inter in inters.reversed) {
         await inter.inter.onException();
       }
       rethrow;
     }
 
     return response;
-  }
-
-  dynamic _makeParam(Inject inj, j.Request request, j.Response response,
-      Map<InputInject, dynamic> interceptorResults, j.PathParams pathParams) {
-    if (inj is InputInject) {
-      if (!interceptorResults.containsKey(inj)) {
-        throw new Exception('Interceptor not found for Input!');
-      }
-      dynamic result = interceptorResults[inj];
-      return result;
-    } else if (inj is RouteResponseInject) {
-      return response;
-    } else if (inj is RequestInject) {
-      return request;
-    } else if (inj is HeaderInject) {
-      return request.headers.value(inj.key);
-    } else if (inj is HeadersInject) {
-      return request.headers;
-    } else if (inj is CookieInject) {
-      return request.cookies
-          .firstWhere((cookie) => cookie.name == inj.key, orElse: () => null)
-          ?.value;
-    } else if (inj is CookiesInject) {
-      return request.cookies;
-    } else if (inj is PathVarInject) {
-      return convertPathVar(inj, pathParams);
-    } else {
-      throw new Exception('Unknown inject to post interceptor method!');
-    }
   }
 
   factory ReflectedRoute.build(
@@ -145,11 +127,76 @@ class ReflectedRoute implements j.RequestHandler {
 
     final Set<RouteQueryParam> optional = _parseOptParamsForRoute(m);
 
-    final List<ReflectedInterceptor> interceptors = wrappers
-        .map((j.RouteWrapper inter) => new ReflectedInterceptor.build(inter))
+    final List<ReflectedWrapper> interceptors = wrappers
+        .map((j.RouteWrapper inter) => new ReflectedWrapper.build(inter))
         .toList();
 
     return new ReflectedRoute(
         jRoute, handler, c, required, optional, interceptors);
+  }
+}
+
+dynamic _makeParam(Inject inj, j.Request request, j.Response response,
+    Map<InputInject, dynamic> interceptorResults, j.PathParams pathParams) {
+  if (inj is InputInject) {
+    if (!interceptorResults.containsKey(inj)) {
+      throw new Exception('Interceptor not found for Input!');
+    }
+    dynamic result = interceptorResults[inj];
+    return result;
+  } else if (inj is RouteResponseInject) {
+    return response;
+  } else if (inj is RequestInject) {
+    return request;
+  } else if (inj is HeaderInject) {
+    return request.headers.value(inj.key);
+  } else if (inj is HeadersInject) {
+    return request.headers;
+  } else if (inj is CookieInject) {
+    return request.cookies
+        .firstWhere((cookie) => cookie.name == inj.key, orElse: () => null)
+        ?.value;
+  } else if (inj is CookiesInject) {
+    return request.cookies;
+  } else if (inj is PathVarInject) {
+    return convertPathVar(inj, pathParams);
+  } else {
+    throw new Exception('Unknown inject to post interceptor method!');
+  }
+}
+
+dynamic convertPathVar(PathVarInject info, j.PathParams pathParams) {
+  switch (info.type) {
+    case dynamic:
+    case String:
+      return pathParams.getField(info.key);
+    case int:
+      return pathParams.getFieldAsInt(info.key);
+    case double:
+      return pathParams.getFieldAsDouble(info.key);
+    case num:
+      return pathParams.getFieldAsNum(info.key);
+    case bool:
+      return pathParams.getFieldAsBool(info.key);
+    default:
+      throw new Exception('Unknown query parameter type!');
+  }
+}
+
+dynamic convertQueryParam(RouteQueryParam info, j.QueryParams queryParams) {
+  switch (info.type) {
+    case dynamic:
+    case String:
+      return queryParams.getField(info.key);
+    case int:
+      return queryParams.getFieldAsInt(info.key);
+    case double:
+      return queryParams.getFieldAsDouble(info.key);
+    case num:
+      return queryParams.getFieldAsNum(info.key);
+    case bool:
+      return queryParams.getFieldAsBool(info.key);
+    default:
+      throw new Exception('Unknown query parameter type!');
   }
 }
