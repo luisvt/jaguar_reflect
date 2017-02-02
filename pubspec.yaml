@@ -9,9 +9,6 @@ homepage: http://jaguar-dart.github.io
 environment:
   sdk: ">=1.8.0 <2.0.0"
 
-environment:
-  sdk: '>=1.0.0 <2.0.0'
-
 dependencies:
   jaguar: '>=0.2.6 <0.3.0'
   quiver: '>=0.24.0 <1.0.0'
