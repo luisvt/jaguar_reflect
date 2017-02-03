@@ -15,7 +15,7 @@ part 'inputs/input.dart';
 part 'interceptor/interceptor.dart';
 
 class JaguarReflected implements j.RequestHandler {
-  final j.RequestHandler _handler;
+  final dynamic _handler;
 
   final List<ReflectedRoute> _routes = <ReflectedRoute>[];
 
