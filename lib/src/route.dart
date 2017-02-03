@@ -81,7 +81,11 @@ class ReflectedRoute implements j.RequestHandler {
         if (result is Future) {
           result = await result;
         }
-        response.value = result;
+        if (result is j.Response) {
+          response = result;
+        } else {
+          response.value = result;
+        }
       }
 
       // Interceptors post
