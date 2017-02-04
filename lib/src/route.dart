@@ -13,6 +13,8 @@ class ReflectedInterceptor {
 class ReflectedRoute implements j.RequestHandler {
   final j.RouteBase route;
 
+  final String prefix;
+
   final Function handler;
 
   final ClosureMirror _invoker;
@@ -23,7 +25,7 @@ class ReflectedRoute implements j.RequestHandler {
 
   final List<ReflectedWrapper> wrappers;
 
-  ReflectedRoute(this.route, this.handler, this._invoker, this._required,
+  ReflectedRoute(this.route, this.prefix, this.handler, this._invoker, this._required,
       this._optional, this.wrappers);
 
   Future<j.Response> handleRequest(j.Request request, {String prefix}) async {
@@ -43,7 +45,7 @@ class ReflectedRoute implements j.RequestHandler {
     final Map<InputInject, dynamic> results = {};
     try {
       for (ReflectedWrapper wrapper in wrappers) {
-        final j.Interceptor i = wrapper.routeWrapper.createInterceptor();
+        final j.Interceptor i = wrapper.createInterceptor();
         final InstanceMirror im = reflect(i);
         final ReflectedInterceptor inter =
             new ReflectedInterceptor(wrapper, i, im);
@@ -61,8 +63,8 @@ class ReflectedRoute implements j.RequestHandler {
         if (result is Future) {
           result = await result;
         }
-        InputInject key = new InputInject(wrapper.interceptorType,
-            id: wrapper.routeWrapper.id);
+        InputInject key =
+            new InputInject(wrapper.interceptorType, id: wrapper.id);
         results[key] = result;
       }
 
@@ -116,8 +118,8 @@ class ReflectedRoute implements j.RequestHandler {
     return response;
   }
 
-  factory ReflectedRoute.build(
-      Function handler, j.RouteBase jRoute, List<j.RouteWrapper> wrappers) {
+  factory ReflectedRoute.build(Function handler, j.RouteBase jRoute, String prefix,
+      List<j.RouteWrapper> wrappers, InstanceMirror groupIm) {
     final InstanceMirror im = reflect(handler);
 
     if (im is! ClosureMirror) {
@@ -132,11 +134,12 @@ class ReflectedRoute implements j.RequestHandler {
     final Set<RouteQueryParam> optional = _parseOptParamsForRoute(m);
 
     final List<ReflectedWrapper> interceptors = wrappers
-        .map((j.RouteWrapper inter) => new ReflectedWrapper.build(inter))
+        .map((j.RouteWrapper inter) =>
+            new ReflectedWrapper.build(inter, groupIm))
         .toList();
 
     return new ReflectedRoute(
-        jRoute, handler, c, required, optional, interceptors);
+        jRoute, prefix, handler, c, required, optional, interceptors);
   }
 }
 

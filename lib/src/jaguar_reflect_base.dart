@@ -13,6 +13,7 @@ part 'route.dart';
 part 'inputs/inject.dart';
 part 'inputs/input.dart';
 part 'interceptor/interceptor.dart';
+part 'interceptor/wrapper_maker.dart';
 
 class JaguarReflected implements j.RequestHandler {
   final dynamic _handler;
@@ -20,10 +21,23 @@ class JaguarReflected implements j.RequestHandler {
   final List<ReflectedRoute> _routes = <ReflectedRoute>[];
 
   JaguarReflected(this._handler) {
-    _parse(reflect(_handler));
+    _parseApi();
   }
 
-  void _parse(InstanceMirror im) {
+  void _parseApi() {
+    InstanceMirror im = reflect(_handler);
+    final List<j.Api> apis = im.type.metadata
+        .map((InstanceMirror aim) => aim.reflectee)
+        .where((dynamic ref) => ref is j.Api)
+        .toList();
+    if(apis.length == 0) {
+      throw new Exception('Handler is not decorated with Api!');
+    }
+
+    _parse(im, apis.first.url);
+  }
+
+  void _parse(InstanceMirror im, String pathPrefix) {
     _routes.clear();
 
     im.type.declarations.forEach((Symbol s, DeclarationMirror decl) {
@@ -56,7 +70,7 @@ class JaguarReflected implements j.RequestHandler {
           throw new Exception('Group must be annotated with RouteGroup!');
         }
 
-        _parse(gim);
+        _parse(gim, groups.first.path + rg.first.path);
       }
 
       if (decl is! MethodMirror) return;
@@ -77,22 +91,16 @@ class JaguarReflected implements j.RequestHandler {
       InstanceMirror method = im.getField(s);
 
       routes
-          .map((j.RouteBase route) =>
-              new ReflectedRoute.build(method.reflectee, route, wrappers))
+          .map((j.RouteBase route) => new ReflectedRoute.build(
+              method.reflectee, route, pathPrefix, wrappers, im))
           .forEach(_routes.add);
     });
   }
 
-  /* TODO
-  void _parseGroups(InstanceMirror im) {
-
-    //TODO
-  }
-  */
-
-  Future<j.Response> handleRequest(j.Request req, {String prefix}) async {
+  Future<j.Response> handleRequest(j.Request req, {String prefix: ''}) async {
     for (ReflectedRoute route in _routes) {
-      j.Response response = await route.handleRequest(req, prefix: prefix);
+      j.Response response =
+          await route.handleRequest(req, prefix: prefix + route.prefix);
       if (response is j.Response) {
         return response;
       }

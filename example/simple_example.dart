@@ -11,6 +11,7 @@ class ExampleGroup1 {
   String sayHi() => 'hi';
 }
 
+@Api()
 class ExampleApi implements RequestHandler {
   JaguarReflected _reflected;
 

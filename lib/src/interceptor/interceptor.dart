@@ -25,7 +25,11 @@ class _Post {
 }
 
 class ReflectedWrapper {
-  final j.RouteWrapper routeWrapper;
+  final j.RouteWrapper _routeWrapper;
+
+  final WrapperMaker _maker;
+
+  String get id => _routeWrapper.id;
 
   final Type interceptorType;
 
@@ -33,10 +37,17 @@ class ReflectedWrapper {
 
   final _Post _post;
 
-  ReflectedWrapper(
-      this.routeWrapper, this._pre, this._post, this.interceptorType);
+  ReflectedWrapper(this._routeWrapper, this._maker, this._pre, this._post,
+      this.interceptorType);
 
-  factory ReflectedWrapper.build(j.RouteWrapper wrapper) {
+  j.Interceptor createInterceptor() {
+    if (_maker == null) return _routeWrapper.createInterceptor();
+    final j.RouteWrapper tempWrapper = _maker.makeWrapper();
+    return tempWrapper.createInterceptor();
+  }
+
+  factory ReflectedWrapper.build(
+      j.RouteWrapper wrapper, InstanceMirror groupIm) {
     ClassMirror icm = _getInterceptorMirror(wrapper);
     _Pre pre;
     _Post post;
@@ -49,7 +60,9 @@ class ReflectedWrapper {
       post = new _Post.build(postM);
     }
 
-    return new ReflectedWrapper(wrapper, pre, post, icm.reflectedType);
+    final WrapperMaker maker = WrapperMaker.make(wrapper, groupIm);
+
+    return new ReflectedWrapper(wrapper, maker, pre, post, icm.reflectedType);
   }
 
   static ClassMirror _getInterceptorMirror(final j.RouteWrapper wrapper) {
