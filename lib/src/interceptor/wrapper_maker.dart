@@ -20,7 +20,7 @@ class WrapperMaker {
 
     for (dynamic p in posArgs) {
       if (p is j.MakeParamFromMethod) {
-        pos.add(_groupIm.invoke(p.methodName, []));
+        pos.add(_groupIm.invoke(p.methodName, []).reflectee);
       } else if (p is j.MakeParamFromSettings) {
         pos.add(p.getSetting());
       } else {
@@ -31,7 +31,7 @@ class WrapperMaker {
     for (Symbol k in namedArgs.keys) {
       dynamic p = namedArgs[k];
       if (p is j.MakeParamFromMethod) {
-        named[k] = _groupIm.invoke(p.methodName, []);
+        named[k] = _groupIm.invoke(p.methodName, []).reflectee;
       } else if (p is j.MakeParamFromSettings) {
         named[k] = p.getSetting();
       } else {
@@ -39,9 +39,7 @@ class WrapperMaker {
       }
     }
 
-    j.RouteWrapper ret =
-        _cm.newInstance(_emptySymbol, pos, named).reflectee;
-    return ret;
+    return _cm.newInstance(_emptySymbol, pos, named).reflectee;
   }
 
   static WrapperMaker make(j.RouteWrapper wrapper, InstanceMirror groupIm) {
