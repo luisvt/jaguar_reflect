@@ -40,7 +40,7 @@ class WrapperMaker {
     }
 
     j.RouteWrapper ret =
-        _cm.newInstance(_emptySymbol, posArgs, namedArgs).reflectee;
+        _cm.newInstance(_emptySymbol, pos, named).reflectee;
     return ret;
   }
 
