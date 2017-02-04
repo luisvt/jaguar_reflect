@@ -25,8 +25,8 @@ class ReflectedRoute implements j.RequestHandler {
 
   final List<ReflectedWrapper> wrappers;
 
-  ReflectedRoute(this.route, this.prefix, this.handler, this._invoker, this._required,
-      this._optional, this.wrappers);
+  ReflectedRoute(this.route, this.prefix, this.handler, this._invoker,
+      this._required, this._optional, this.wrappers);
 
   Future<j.Response> handleRequest(j.Request request, {String prefix}) async {
     final j.PathParams pathParams = new j.PathParams();
@@ -118,8 +118,8 @@ class ReflectedRoute implements j.RequestHandler {
     return response;
   }
 
-  factory ReflectedRoute.build(Function handler, j.RouteBase jRoute, String prefix,
-      List<j.RouteWrapper> wrappers, InstanceMirror groupIm) {
+  factory ReflectedRoute.build(Function handler, j.RouteBase jRoute,
+      String prefix, List<j.RouteWrapper> wrappers, InstanceMirror groupIm) {
     final InstanceMirror im = reflect(handler);
 
     if (im is! ClosureMirror) {

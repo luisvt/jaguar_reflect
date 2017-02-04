@@ -104,8 +104,6 @@ class WrapperMaker {
       }
     }
 
-    WrapperMaker ret = new WrapperMaker(cm, pos, named, groupIm);
-    ret.makeWrapper();
-    return ret;
+    return new WrapperMaker(cm, pos, named, groupIm);
   }
 }

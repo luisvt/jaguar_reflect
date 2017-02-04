@@ -30,7 +30,7 @@ class JaguarReflected implements j.RequestHandler {
         .map((InstanceMirror aim) => aim.reflectee)
         .where((dynamic ref) => ref is j.Api)
         .toList();
-    if(apis.length == 0) {
+    if (apis.length == 0) {
       throw new Exception('Handler is not decorated with Api!');
     }
 
