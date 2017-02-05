@@ -106,6 +106,8 @@ Inject _detectInjectFromInput(annot) {
   if (annot is j.InputCookie) return new CookieInject(annot.key);
   if (annot is j.InputCookies) return new CookiesInject();
   if (annot is j.InputRouteResponse) return new RouteResponseInject();
+  if (annot is j.InputQueryParams) return new QueryParamsInject();
+  if (annot is j.InputPathParams) return new PathParamsInject();
 
   return null;
 }

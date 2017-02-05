@@ -34,6 +34,10 @@ class RouteResponseInject implements Inject {}
 
 class RequestInject implements Inject {}
 
+class QueryParamsInject implements Inject {}
+
+class PathParamsInject implements Inject {}
+
 class InputInject implements Inject {
   /// Defines an interceptor, whose response must be used as input
   final Type resultFrom;

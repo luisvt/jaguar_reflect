@@ -56,7 +56,8 @@ class ReflectedRoute implements j.RequestHandler {
         final List reqParam = [];
 
         for (Inject inj in inter.wrapper._pre.injects) {
-          reqParam.add(_makeParam(inj, request, response, results, pathParams));
+          reqParam.add(_makeParam(
+              inj, request, response, results, pathParams, queryParams));
         }
 
         dynamic result = inter.interMirror.invoke(#pre, reqParam).reflectee;
@@ -71,7 +72,8 @@ class ReflectedRoute implements j.RequestHandler {
       {
         final List reqParam = [];
         for (Inject inj in _required) {
-          reqParam.add(_makeParam(inj, request, response, results, pathParams));
+          reqParam.add(_makeParam(
+              inj, request, response, results, pathParams, queryParams));
         }
 
         final Map<Symbol, dynamic> optParams = {};
@@ -97,7 +99,8 @@ class ReflectedRoute implements j.RequestHandler {
         final List reqParam = [];
 
         for (Inject inj in inter.wrapper._post.injects) {
-          reqParam.add(_makeParam(inj, request, response, results, pathParams));
+          reqParam.add(_makeParam(
+              inj, request, response, results, pathParams, queryParams));
         }
 
         dynamic resp = inter.interMirror.invoke(#post, reqParam).reflectee;
@@ -143,8 +146,13 @@ class ReflectedRoute implements j.RequestHandler {
   }
 }
 
-dynamic _makeParam(Inject inj, j.Request request, j.Response response,
-    Map<InputInject, dynamic> interceptorResults, j.PathParams pathParams) {
+dynamic _makeParam(
+    Inject inj,
+    j.Request request,
+    j.Response response,
+    Map<InputInject, dynamic> interceptorResults,
+    j.PathParams pathParams,
+    j.QueryParams queryParams) {
   if (inj is InputInject) {
     if (!interceptorResults.containsKey(inj)) {
       throw new Exception('Interceptor not found for Input!');
@@ -167,6 +175,10 @@ dynamic _makeParam(Inject inj, j.Request request, j.Response response,
     return request.cookies;
   } else if (inj is PathVarInject) {
     return convertPathVar(inj, pathParams);
+  } else if (inj is QueryParamsInject) {
+    return queryParams;
+  } else if (inj is PathParamsInject) {
+    return pathParams;
   } else {
     throw new Exception('Unknown inject to post interceptor method!');
   }
