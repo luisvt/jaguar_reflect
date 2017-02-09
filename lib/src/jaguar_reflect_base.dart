@@ -25,6 +25,8 @@ class JaguarReflected implements j.RequestHandler {
   }
 
   void _parseApi() {
+    _routes.clear();
+
     InstanceMirror im = reflect(_handler);
     final List<j.Api> apis = im.type.metadata
         .map((InstanceMirror aim) => aim.reflectee)
@@ -38,8 +40,6 @@ class JaguarReflected implements j.RequestHandler {
   }
 
   void _parse(InstanceMirror im, String pathPrefix) {
-    _routes.clear();
-
     im.type.declarations.forEach((Symbol s, DeclarationMirror decl) {
       if (decl.isPrivate) return;
 
