@@ -36,10 +36,16 @@ class JaguarReflected implements j.RequestHandler {
       throw new Exception('Handler is not decorated with Api!');
     }
 
-    _parse(im, apis.first.url);
+    final List<j.RouteWrapper> wrappers = im.type.metadata
+        .where((InstanceMirror annot) => annot.reflectee is j.RouteWrapper)
+        .map((InstanceMirror annot) => annot.reflectee)
+        .toList();
+
+    _parse(im, apis.first.url, topWrapper: wrappers);
   }
 
-  void _parse(InstanceMirror im, String pathPrefix) {
+  void _parse(InstanceMirror im, String pathPrefix,
+      {List<j.RouteWrapper> topWrapper: const []}) {
     im.type.declarations.forEach((Symbol s, DeclarationMirror decl) {
       if (decl.isPrivate) return;
 
@@ -75,8 +81,6 @@ class JaguarReflected implements j.RequestHandler {
 
       if (decl is! MethodMirror) return;
 
-      final List<j.RouteWrapper> topWrapper = [];
-
       final List<j.RouteBase> routes = decl.metadata
           .where((InstanceMirror annot) => annot.reflectee is j.RouteBase)
           .map((InstanceMirror annot) => annot.reflectee)
@@ -86,7 +90,9 @@ class JaguarReflected implements j.RequestHandler {
       final List<j.RouteWrapper> wrappers = decl.metadata
           .where((InstanceMirror annot) => annot.reflectee is j.RouteWrapper)
           .map((InstanceMirror annot) => annot.reflectee)
-          .toList()..addAll(topWrapper);
+          .toList();
+
+      wrappers.insertAll(0, topWrapper);
 
       InstanceMirror method = im.getField(s);
 
