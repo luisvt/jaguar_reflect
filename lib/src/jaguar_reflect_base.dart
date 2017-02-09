@@ -76,7 +76,13 @@ class JaguarReflected implements j.RequestHandler {
           throw new Exception('Group must be annotated with RouteGroup!');
         }
 
-        _parse(gim, pathPrefix + groups.first.path + rg.first.path);
+        final List<j.RouteWrapper> wrappers = im.type.metadata
+            .where((InstanceMirror annot) => annot.reflectee is j.RouteWrapper)
+            .map((InstanceMirror annot) => annot.reflectee)
+            .toList();
+
+        _parse(gim, pathPrefix + groups.first.path + rg.first.path,
+            topWrapper: wrappers);
       }
 
       if (decl is! MethodMirror) return;
