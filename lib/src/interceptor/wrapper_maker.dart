@@ -1,5 +1,19 @@
 part of jaguar_reflect.base;
 
+class MakeFromMethodHasInjection {
+  final Symbol name;
+
+  final List<Inject> injects;
+
+  MakeFromMethodHasInjection(this.name, this.injects);
+
+  factory MakeFromMethodHasInjection.build(MethodMirror m) {
+    final List<Inject> injects = _parseReqParamsForPost(m);
+
+    return new MakeFromMethodHasInjection(m.simpleName, injects);
+  }
+}
+
 class WrapperMaker {
   final List<dynamic> posArgs;
 
@@ -13,7 +27,12 @@ class WrapperMaker {
 
   static const Symbol _emptySymbol = const Symbol('');
 
-  j.RouteWrapper makeWrapper() {
+  j.RouteWrapper makeWrapper(
+      j.Request request,
+      j.Response response,
+      Map<InputInject, dynamic> results,
+      j.PathParams pathParams,
+      j.QueryParams queryParams) {
     final List<dynamic> pos = [];
 
     final Map<Symbol, dynamic> named = {};
@@ -23,6 +42,13 @@ class WrapperMaker {
         pos.add(_groupIm.invoke(p.methodName, []).reflectee);
       } else if (p is j.MakeParamFromSettings) {
         pos.add(p.getSetting());
+      } else if (p is MakeFromMethodHasInjection) {
+        final List reqParam = [];
+        for (Inject inj in p.injects) {
+          reqParam.add(_makeParam(
+              inj, request, response, results, pathParams, queryParams));
+        }
+        pos.add(_groupIm.invoke(p.name, reqParam).reflectee);
       } else {
         pos.add(p);
       }
@@ -34,6 +60,13 @@ class WrapperMaker {
         named[k] = _groupIm.invoke(p.methodName, []).reflectee;
       } else if (p is j.MakeParamFromSettings) {
         named[k] = p.getSetting();
+      } else if (p is MakeFromMethodHasInjection) {
+        final List reqParam = [];
+        for (Inject inj in p.injects) {
+          reqParam.add(_makeParam(
+              inj, request, response, results, pathParams, queryParams));
+        }
+        named[k] = _groupIm.invoke(p.name, reqParam).reflectee;
       } else {
         named[k] = p;
       }
@@ -86,7 +119,23 @@ class WrapperMaker {
       if (!pm.isOptional) {
         if (reflectee == null &&
             wrapper.makeParams.containsKey(pm.simpleName)) {
-          pos.add(wrapper.makeParams[pm.simpleName]);
+          final j.MakeParam makeParam = wrapper.makeParams[pm.simpleName];
+          if (makeParam is j.MakeParamFromMethod) {
+            final DeclarationMirror meth =
+                groupIm.type.declarations[makeParam.methodName];
+            if (meth is MethodMirror) {
+              //TODO check if return type matches parameter type
+              if (meth.parameters.length == 0) {
+                pos.add(makeParam);
+              } else {
+                pos.add(new MakeFromMethodHasInjection.build(meth));
+              }
+            } else {
+              throw new Exception("Method for MakeParamFromMethod not found!");
+            }
+          } else {
+            pos.add(makeParam);
+          }
         } else {
           pos.add(reflectee);
         }
@@ -95,7 +144,24 @@ class WrapperMaker {
             'makeParams can only used with named optional parameters!');
       } else {
         if (wrapper.makeParams.containsKey(pm.simpleName)) {
-          named[pm.simpleName] = wrapper.makeParams[pm.simpleName];
+          final j.MakeParam makeParam = wrapper.makeParams[pm.simpleName];
+          if (makeParam is j.MakeParamFromMethod) {
+            final DeclarationMirror meth =
+                groupIm.type.declarations[makeParam.methodName];
+            if (meth is MethodMirror) {
+              //TODO check if return type matches parameter type
+              if (meth.parameters.length == 0) {
+                named[pm.simpleName] = makeParam;
+              } else {
+                named[pm.simpleName] =
+                    new MakeFromMethodHasInjection.build(meth);
+              }
+            } else {
+              throw new Exception("Method for MakeParamFromMethod not found!");
+            }
+          } else {
+            named[pm.simpleName] = makeParam;
+          }
         } else if (reflectee != pm.defaultValue.reflectee) {
           named[pm.simpleName] = reflectee;
         }

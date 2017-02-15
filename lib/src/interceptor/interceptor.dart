@@ -40,9 +40,15 @@ class ReflectedWrapper {
   ReflectedWrapper(this._routeWrapper, this._maker, this._pre, this._post,
       this.interceptorType);
 
-  j.Interceptor createInterceptor() {
+  j.Interceptor createInterceptor(
+      j.Request request,
+      j.Response response,
+      Map<InputInject, dynamic> results,
+      j.PathParams pathParams,
+      j.QueryParams queryParams) {
     if (_maker == null) return _routeWrapper.createInterceptor();
-    final j.RouteWrapper tempWrapper = _maker.makeWrapper();
+    final j.RouteWrapper tempWrapper = _maker.makeWrapper(
+        request, response, results, pathParams, queryParams);
     return tempWrapper.createInterceptor();
   }
 

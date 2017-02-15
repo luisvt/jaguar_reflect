@@ -12,11 +12,8 @@ class ExampleGroup1 {
 }
 
 @Api()
-class ExampleApi implements RequestHandler {
-  JaguarReflected _reflected;
-
+class ExampleApi {
   ExampleApi() {
-    _reflected = new JaguarReflected(this);
   }
 
   @Get(path: '/api/hello')
@@ -24,11 +21,12 @@ class ExampleApi implements RequestHandler {
 
   @Group()
   final ExampleGroup1 group1 = new ExampleGroup1();
-
-  Future<Response> handleRequest(Request req, {String prefix}) =>
-      _reflected.handleRequest(req, prefix: prefix);
 }
 
 main() async {
   final api = new ExampleApi();
+
+  final conf = new Configuration();
+  conf.addApi(reflectJaguar(api));
+  await serve(conf);
 }

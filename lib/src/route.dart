@@ -45,7 +45,8 @@ class ReflectedRoute implements j.RequestHandler {
     final Map<InputInject, dynamic> results = {};
     try {
       for (ReflectedWrapper wrapper in wrappers) {
-        final j.Interceptor i = wrapper.createInterceptor();
+        final j.Interceptor i = wrapper.createInterceptor(
+            request, response, results, pathParams, queryParams);
         final InstanceMirror im = reflect(i);
         final ReflectedInterceptor inter =
             new ReflectedInterceptor(wrapper, i, im);

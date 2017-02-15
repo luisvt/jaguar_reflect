@@ -31,7 +31,7 @@ class JaguarReflected implements j.RequestHandler {
     final List<j.Api> apis = im.type.metadata
         .map((InstanceMirror aim) => aim.reflectee)
         .where((dynamic ref) => ref is j.Api)
-        .toList();
+        .toList() as List<j.Api>;
     if (apis.length == 0) {
       throw new Exception('Handler is not decorated with Api!');
     }
@@ -39,7 +39,7 @@ class JaguarReflected implements j.RequestHandler {
     final List<j.RouteWrapper> wrappers = im.type.metadata
         .where((InstanceMirror annot) => annot.reflectee is j.RouteWrapper)
         .map((InstanceMirror annot) => annot.reflectee)
-        .toList();
+        .toList() as List<j.RouteWrapper>;
 
     _parse(im, apis.first.url, topWrapper: wrappers);
   }
@@ -53,7 +53,7 @@ class JaguarReflected implements j.RequestHandler {
         final List<j.Group> groups = decl.metadata
             .where((InstanceMirror annot) => annot.reflectee is j.Group)
             .map((InstanceMirror annot) => annot.reflectee)
-            .toList();
+            .toList() as List<j.Group>;
 
         if (groups.length == 0) return;
 
@@ -70,7 +70,7 @@ class JaguarReflected implements j.RequestHandler {
         List<j.RouteGroup> rg = gim.type.metadata
             .where((InstanceMirror annot) => annot.reflectee is j.RouteGroup)
             .map((InstanceMirror annot) => annot.reflectee)
-            .toList();
+            .toList() as List<j.RouteGroup>;
 
         if (rg.length == 0) {
           throw new Exception('Group must be annotated with RouteGroup!');
@@ -79,7 +79,7 @@ class JaguarReflected implements j.RequestHandler {
         final List<j.RouteWrapper> wrappers = gim.type.metadata
             .where((InstanceMirror annot) => annot.reflectee is j.RouteWrapper)
             .map((InstanceMirror annot) => annot.reflectee)
-            .toList();
+            .toList() as List<j.RouteWrapper>;
 
         _parse(gim, pathPrefix + groups.first.path + rg.first.path,
             topWrapper: wrappers);
@@ -90,13 +90,13 @@ class JaguarReflected implements j.RequestHandler {
       final List<j.RouteBase> routes = decl.metadata
           .where((InstanceMirror annot) => annot.reflectee is j.RouteBase)
           .map((InstanceMirror annot) => annot.reflectee)
-          .toList();
+          .toList() as List<j.RouteBase>;
       if (routes.length == 0) return;
 
       final List<j.RouteWrapper> wrappers = decl.metadata
           .where((InstanceMirror annot) => annot.reflectee is j.RouteWrapper)
           .map((InstanceMirror annot) => annot.reflectee)
-          .toList();
+          .toList() as List<j.RouteWrapper>;
 
       wrappers.insertAll(0, topWrapper);
 
@@ -121,3 +121,6 @@ class JaguarReflected implements j.RequestHandler {
     return null;
   }
 }
+
+JaguarReflected reflectJaguar(Object routeGroup) =>
+    new JaguarReflected(routeGroup);
